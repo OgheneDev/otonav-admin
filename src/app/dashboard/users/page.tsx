@@ -6,17 +6,21 @@ import { getUsers } from "@/lib/api";
 import { User, Pagination as PaginationType } from "@/types";
 import {
   Card,
-  StatusBadge,
   Pagination,
-  LoadingSpinner,
   EmptyState,
   Input,
-  Select,
   SkeletonRow,
 } from "@/components/ui";
-import { Users, Search } from "lucide-react";
+import { Users, Search, Check, X } from "lucide-react";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/useDebounce";
+
+const ROLE_TABS = [
+  { label: "All Users", value: "all" },
+  { label: "Vendors", value: "owner" },
+  { label: "Riders", value: "rider" },
+  { label: "Customers", value: "customer" },
+];
 
 export default function UsersPage() {
   const router = useRouter();
@@ -37,7 +41,6 @@ export default function UsersPage() {
         role: role !== "all" ? role : undefined,
         search: debouncedSearch || undefined,
       });
-      // Filter out users with role "admin"
       const filteredUsers = res.data.data.users.filter(
         (user: User) => user.role !== "admin",
       );
@@ -57,63 +60,95 @@ export default function UsersPage() {
     setPage(1);
   }, [role, debouncedSearch]);
 
+  const formatStatus = (raw: string) => {
+    if (raw === "owner") return "Vendor";
+    return raw.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
+
   return (
-    <div className="space-y-5">
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-        <div className="relative flex-1 max-w-sm">
-          <Search
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2"
-            style={{ color: "var(--text-muted)" }}
-          />
-          <Input
-            value={search}
-            onChange={setSearch}
-            placeholder="Search by name or email…"
-            className="pl-8"
-          />
+    <div className="space-y-6">
+      {/* Search and Filters */}
+      <div className="flex flex-col gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="relative flex-1 max-w-md">
+            <Search
+              size={16}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+            />
+            <Input
+              value={search}
+              onChange={setSearch}
+              placeholder="Search name or email..."
+              className="pl-10 border-gray-200 focus:border-[var(--brand-teal)] transition-all"
+            />
+          </div>
+          <p className="font-mono text-[10px] tracking-widest text-gray-900 uppercase">
+            {pagination ? `${pagination.total} Accounts` : ""}
+          </p>
         </div>
-        <Select
-          value={role}
-          onChange={setRole}
-          options={[
-            { label: "All Roles", value: "all" },
-            { label: "Vendor", value: "owner" },
-            { label: "Rider", value: "rider" },
-            { label: "Customer", value: "customer" },
-            // Admin option removed
-          ]}
-        />
-        <p className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
-          {pagination ? `${pagination.total} total` : ""}
-        </p>
+
+        {/* Brand Tabs for Roles */}
+        <div
+          className="flex items-center gap-8 border-b"
+          style={{ borderColor: "var(--border)" }}
+        >
+          {ROLE_TABS.map((tab) => {
+            const isActive = role === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setRole(tab.value)}
+                className="pb-4 text-sm font-medium transition-all relative"
+                style={{
+                  color: isActive ? "var(--brand-teal)" : "text-gray-900",
+                }}
+              >
+                {tab.label}
+                {isActive && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-0.5"
+                    style={{ background: "var(--brand-teal)" }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
-      <Card>
+      <Card className="border-none shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="data-table">
+          <table className="w-full text-left">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Verified</th>
-                <th>Joined</th>
+              <tr className="border-b" style={{ borderColor: "var(--border)" }}>
+                <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-medium text-gray-900 font-mono">
+                  User
+                </th>
+                <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-medium text-gray-900 font-mono">
+                  Role
+                </th>
+                <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-medium text-gray-900 font-mono text-center">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-medium text-gray-900 font-mono text-right">
+                  Joined
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody
+              className="divide-y"
+              style={{ borderColor: "var(--border)" }}
+            >
               {loading ? (
                 Array.from({ length: 8 }).map((_, i) => (
-                  <SkeletonRow key={i} cols={6} />
+                  <SkeletonRow key={i} cols={4} />
                 ))
               ) : users.length === 0 ? (
                 <tr>
-                  <td colSpan={6}>
+                  <td colSpan={4}>
                     <EmptyState
                       icon={<Users size={20} />}
                       title="No users found"
-                      description="Try adjusting your filters"
                     />
                   </td>
                 </tr>
@@ -121,13 +156,13 @@ export default function UsersPage() {
                 users.map((user) => (
                   <tr
                     key={user.id}
-                    className="cursor-pointer"
+                    className="hover:bg-gray-50 transition-colors cursor-pointer group"
                     onClick={() => router.push(`/dashboard/users/${user.id}`)}
                   >
-                    <td>
-                      <div className="flex items-center gap-2.5">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
                         <div
-                          className="w-7 h-7 rounded-lg flex items-center justify-center text-white text-xs font-semibold shrink-0"
+                          className="w-8 h-8 rounded-lg flex items-center justify-center text-white text-[10px] font-semibold shrink-0"
                           style={{
                             background:
                               "linear-gradient(135deg, var(--brand-red), #c85c5c)",
@@ -135,40 +170,46 @@ export default function UsersPage() {
                         >
                           {user.name?.charAt(0)?.toUpperCase() || "?"}
                         </div>
-                        <span
-                          className="font-medium text-sm"
-                          style={{ color: "var(--text-primary)" }}
-                        >
-                          {user.name || "—"}
-                        </span>
+                        <div>
+                          <div className="text-sm text-gray-900 font-medium">
+                            {user.name || "—"}
+                          </div>
+                          <div className="text-[11px] font-mono text-gray-500">
+                            {user.email}
+                          </div>
+                        </div>
                       </div>
                     </td>
-                    <td className="font-mono text-xs">{user.email}</td>
-                    <td>
-                      <StatusBadge status={user.role} />
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {formatStatus(user.role)}
+                      </div>
                     </td>
-                    <td>
-                      <StatusBadge
-                        status={user.isActive ? "active" : "inactive"}
-                      />
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-center gap-4">
+                        {/* Humanized Active/Inactive with dots */}
+                        <div className="flex items-center gap-1.5 min-w-[70px]">
+                          <span className="text-sm text-gray-900">
+                            {user.isActive ? "Active" : "Disabled"}
+                          </span>
+                        </div>
+                        {/* Verified mark */}
+                        <div className="flex items-center gap-1">
+                          {user.emailVerified ? (
+                            <Check
+                              size={14}
+                              style={{ color: "var(--brand-teal)" }}
+                            />
+                          ) : (
+                            <X size={14} className="text-gray-300" />
+                          )}
+                        </div>
+                      </div>
                     </td>
-                    <td>
-                      <span
-                        className="text-xs font-mono"
-                        style={{
-                          color: user.emailVerified
-                            ? "var(--brand-teal)"
-                            : "var(--text-muted)",
-                        }}
-                      >
-                        {user.emailVerified ? "✓" : "✗"}
+                    <td className="px-6 py-4 text-right">
+                      <span className="font-mono text-xs text-gray-900">
+                        {format(new Date(user.createdAt), "dd MMM, yyyy")}
                       </span>
-                    </td>
-                    <td
-                      className="font-mono text-xs"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {format(new Date(user.createdAt), "MMM d, yyyy")}
                     </td>
                   </tr>
                 ))
@@ -177,13 +218,18 @@ export default function UsersPage() {
           </table>
         </div>
         {pagination && (
-          <Pagination
-            page={page}
-            pages={pagination.pages}
-            total={pagination.total}
-            limit={20}
-            onPage={setPage}
-          />
+          <div
+            className="p-4 border-t"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <Pagination
+              page={page}
+              pages={pagination.pages}
+              total={pagination.total}
+              limit={20}
+              onPage={setPage}
+            />
+          </div>
         )}
       </Card>
     </div>

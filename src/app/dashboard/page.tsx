@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { getDashboardOverview } from "@/lib/api";
 import { DashboardStats, RecentOrder } from "@/types";
-import { StatCard, StatusBadge, LoadingSpinner } from "@/components/ui";
+import { StatCard, LoadingSpinner, Card } from "@/components/ui";
 import {
   Users,
   Building2,
@@ -11,14 +11,19 @@ import {
   Clock,
   ShieldCheck,
   ArrowRight,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { useRouter } from "next/navigation";
+import { useAuthStore } from "@/stores/auth.store";
 
 export default function DashboardPage() {
+  const router = useRouter();
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const { admin } = useAuthStore();
 
   useEffect(() => {
     getDashboardOverview()
@@ -30,164 +35,206 @@ export default function DashboardPage() {
       .finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <LoadingSpinner />;
+  if (loading)
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    );
+
+  const humanizeStatus = (status: string) => {
+    return status.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
 
   return (
-    <div className="space-y-8">
-      {/* Greeting */}
-      <div>
-        <h2 className="font-display text-3xl text-gray-900 leading-none">
-          Good day
-        </h2>
-        <p className="mt-1.5 text-sm" style={{ color: "var(--text-muted)" }}>
-          Here's what's happening across OtoNav.
-        </p>
-      </div>
-
-      {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-        <StatCard
-          label="Total Users"
-          value={stats?.totalUsers ?? "—"}
-          icon={<Users size={20} />}
-          accent="teal"
-        />
-        <StatCard
-          label="Organizations"
-          value={stats?.totalOrganizations ?? "—"}
-          icon={<Building2 size={20} />}
-          accent="red"
-        />
-        <StatCard
-          label="Total Orders"
-          value={stats?.totalOrders ?? "—"}
-          icon={<Package size={20} />}
-          accent="orange"
-        />
-        <StatCard
-          label="Pending Orders"
-          value={stats?.pendingOrders ?? "—"}
-          icon={<Clock size={20} />}
-          accent="purple"
-          sub="Awaiting assignment"
-        />
-        <StatCard
-          label="Verified Riders"
-          value={stats?.verifiedRiders ?? "—"}
-          icon={<ShieldCheck size={20} />}
-          accent="teal"
-        />
-      </div>
-
-      {/* Quick links */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        {[
-          {
-            label: "Manage Users",
-            href: "/dashboard/users",
-            color: "var(--brand-teal)",
-          },
-          {
-            label: "View Orders",
-            href: "/dashboard/orders",
-            color: "var(--brand-red)",
-          },
-          {
-            label: "Verified Riders",
-            href: "/dashboard/verified-riders",
-            color: "#F97316",
-          },
-          {
-            label: "Analytics",
-            href: "/dashboard/analytics",
-            color: "#8B5CF6",
-          },
-        ].map((link) => (
-          <Link
-            key={link.href}
-            href={link.href}
-            className="flex items-center justify-between px-4 py-3 rounded-xl border bg-white text-sm font-medium transition-all hover:-translate-y-0.5 hover:shadow-md group"
-            style={{
-              borderColor: "var(--border)",
-              color: "var(--text-secondary)",
-            }}
-          >
-            {link.label}
-            <ArrowRight
-              size={14}
-              className="group-hover:translate-x-0.5 transition-transform"
-              style={{ color: link.color }}
-            />
-          </Link>
-        ))}
-      </div>
-
-      {/* Recent orders */}
-      <div
-        className="bg-white rounded-2xl border overflow-hidden"
-        style={{ borderColor: "var(--border)" }}
-      >
-        <div
-          className="flex items-center justify-between px-5 py-4 border-b"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <h3
-            className="font-medium text-sm"
-            style={{ color: "var(--text-primary)" }}
-          >
-            Recent Orders
-          </h3>
-          <Link
-            href="/dashboard/orders"
-            className="text-xs font-medium flex items-center gap-1 hover:underline"
-            style={{ color: "var(--brand-teal)" }}
-          >
-            View all <ArrowRight size={12} />
-          </Link>
+    <div className="max-w-[1600px] mx-auto space-y-10 p-2">
+      {/* Header Section */}
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-medium tracking-tight text-gray-900">
+            Good day, {admin?.name || "Admin"}
+          </h2>
+          <p className="text-gray-600 mt-1 text-sm">
+            Overview and performance of the OtoNav network.
+          </p>
         </div>
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Organization</th>
-                <th>Status</th>
-                <th>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {recentOrders.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={4}
-                    className="text-center py-10 text-sm"
-                    style={{ color: "var(--text-muted)" }}
-                  >
-                    No orders yet
-                  </td>
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg">
+          <TrendingUp size={14} className="text-[var(--brand-teal)]" />
+          <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gray-900">
+            Live Network Status
+          </span>
+        </div>
+      </header>
+
+      {/* Stats Grid */}
+      <section className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <StatCard
+            label="Total Users"
+            value={stats?.totalUsers ?? "—"}
+            icon={<Users className="text-blue-500" size={20} />}
+          />
+          <StatCard
+            label="Organizations"
+            value={stats?.totalOrganizations ?? "—"}
+            icon={<Building2 className="text-[var(--brand-teal)]" size={20} />}
+          />
+          <StatCard
+            label="Total Orders"
+            value={stats?.totalOrders ?? "—"}
+            icon={<Package className="text-purple-500" size={20} />}
+          />
+          <StatCard
+            label="Pending Action"
+            value={stats?.pendingOrders ?? "—"}
+            icon={<Clock className="text-[var(--brand-red)]" size={20} />}
+          />
+        </div>
+
+        {/* Brand Verified Banner */}
+        <div className="flex items-center gap-3 px-5 py-3 bg-white border border-[var(--brand-teal)]/20 rounded-2xl w-fit shadow-sm">
+          <div className="bg-[var(--brand-teal)]/10 p-1.5 rounded-lg">
+            <ShieldCheck size={18} style={{ color: "var(--brand-teal)" }} />
+          </div>
+          <span className="text-sm text-gray-900">
+            <span className="font-semibold text-[var(--brand-red)]">
+              {stats?.verifiedRiders ?? 0}
+            </span>{" "}
+            Verified Riders currently active on the network
+          </span>
+        </div>
+      </section>
+
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        {/* Recent Orders Table */}
+        <Card className="xl:col-span-2 border-none shadow-sm overflow-hidden bg-white">
+          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50">
+            <h3 className="text-sm font-medium uppercase tracking-wider text-gray-900">
+              Recent Orders
+            </h3>
+            <Link
+              href="/dashboard/orders"
+              className="text-xs text-[var(--brand-teal)] hover:underline flex items-center gap-1"
+            >
+              View all orders <ArrowRight size={14} />
+            </Link>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-gray-50/50">
+                  <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
+                    Order #
+                  </th>
+                  <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
+                    Organization
+                  </th>
+                  <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400 text-right">
+                    Created
+                  </th>
                 </tr>
-              ) : (
-                recentOrders.map((order) => (
-                  <tr
-                    key={order.id}
-                    className="cursor-pointer"
-                    onClick={() =>
-                      (window.location.href = `/dashboard/orders/${order.id}`)
-                    }
-                  >
-                    <td className="font-mono text-xs">{order.orderNumber}</td>
-                    <td>{order.orgName}</td>
-                    <td>
-                      <StatusBadge status={order.status} />
-                    </td>
-                    <td className="font-mono text-xs">
-                      {format(new Date(order.createdAt), "MMM d, yyyy")}
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {recentOrders.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={4}
+                      className="text-center py-12 text-gray-400 text-sm"
+                    >
+                      No recent orders found.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  recentOrders.map((order) => (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-gray-50/80 cursor-pointer transition-all group"
+                      onClick={() =>
+                        router.push(`/dashboard/orders/${order.id}`)
+                      }
+                    >
+                      <td className="px-6 py-4 font-mono text-xs text-gray-900">
+                        #{order.orderNumber}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-900">
+                        {order.orgName}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2 text-xs text-gray-900">
+                          <div
+                            className="w-1 h-1 rounded-full"
+                            style={{
+                              background:
+                                order.status === "pending"
+                                  ? "var(--brand-red)"
+                                  : "var(--brand-teal)",
+                            }}
+                          />
+                          {humanizeStatus(order.status)}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-right font-mono text-xs text-gray-600">
+                        {format(new Date(order.createdAt), "MMM d, yyyy")}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+
+        {/* Quick Actions Panel */}
+        <div className="space-y-4">
+          <h3 className="text-sm font-medium uppercase tracking-wider text-gray-900 px-1">
+            Control Center
+          </h3>
+          <div className="grid grid-cols-1 gap-3">
+            {[
+              {
+                label: "User Management",
+                href: "/dashboard/users",
+                desc: "Manage accounts & permissions",
+              },
+              {
+                label: "Order Logistics",
+                href: "/dashboard/orders",
+                desc: "Track customer order flow",
+              },
+              {
+                label: "Rider Verification",
+                href: "/dashboard/verified-riders",
+                desc: "Audit delivery personnel",
+              },
+              {
+                label: "System Analytics",
+                href: "/dashboard/analytics",
+                desc: "Performance & trends",
+              },
+            ].map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="block p-5 rounded-2xl border border-gray-100 bg-white hover:border-[var(--brand-teal)] hover:shadow-md hover:shadow-[var(--brand-teal)]/5 transition-all group"
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm font-medium text-gray-900 group-hover:text-[var(--brand-teal)] transition-colors">
+                    {link.label}
+                  </span>
+                  <ArrowRight
+                    size={16}
+                    className="text-gray-300 group-hover:text-[var(--brand-teal)] group-hover:translate-x-1 transition-all"
+                  />
+                </div>
+                <p className="text-xs text-gray-500 leading-relaxed">
+                  {link.desc}
+                </p>
+              </Link>
+            ))}
+          </div>
         </div>
       </div>
     </div>

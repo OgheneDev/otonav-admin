@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { getOrganizationById } from "@/lib/api";
 import { Organization } from "@/types";
-import { StatusBadge, LoadingSpinner, Card, Button } from "@/components/ui";
+import { LoadingSpinner, Card } from "@/components/ui";
 import {
   ArrowLeft,
   Building2,
@@ -12,6 +12,7 @@ import {
   Package,
   Users,
   ShieldAlert,
+  Calendar,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -28,184 +29,180 @@ export default function OrgDetailPage() {
       .finally(() => setLoading(false));
   }, [orgId]);
 
-  if (loading) return <LoadingSpinner />;
-  if (!org)
+  if (loading)
     return (
-      <p className="text-sm" style={{ color: "var(--text-muted)" }}>
-        Organization not found.
-      </p>
+      <div className="p-8">
+        <LoadingSpinner />
+      </div>
     );
+  if (!org)
+    return <p className="text-sm text-gray-500 p-8">Organization not found.</p>;
+
+  const isEnterprise = org.subscriptionPlan
+    ?.toLowerCase()
+    .includes("enterprise");
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      <Button variant="ghost" size="sm" onClick={() => router.back()}>
-        <ArrowLeft size={14} /> Back
-      </Button>
+    <div className="space-y-8 max-w-5xl">
+      {/* Navigation */}
+      <button
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-900 transition-colors group"
+      >
+        <ArrowLeft
+          size={16}
+          className="group-hover:-translate-x-0.5 transition-transform"
+        />
+        Back to Organizations
+      </button>
 
-      {/* Header */}
-      <Card>
-        <div className="p-6 flex items-start gap-5">
-          <div
-            className="w-14 h-14 rounded-2xl flex items-center justify-center shrink-0"
-            style={{
-              background: "rgba(0,160,130,0.1)",
-              color: "var(--brand-teal)",
-            }}
-          >
-            <Building2 size={26} />
+      {/* Profile Header */}
+      <Card className="border-none shadow-sm overflow-hidden bg-white">
+        <div className="p-8 flex flex-col md:flex-row md:items-center gap-6">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-[var(--brand-teal)]/10 text-[var(--brand-teal)] shrink-0">
+            <Building2 size={32} />
           </div>
-          <div className="flex-1">
-            <div className="flex items-center gap-3 flex-wrap">
-              <h2
-                className="font-display text-2xl"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {org.name}
-              </h2>
+
+          <div className="flex-1 space-y-2">
+            <div className="flex items-center gap-4 flex-wrap">
+              <h2 className="text-2xl text-gray-900 font-medium">{org.name}</h2>
               {org.subscriptionPlan && (
-                <StatusBadge status={org.subscriptionPlan} />
+                <span
+                  className={`text-xs font-bold uppercase tracking-widest px-2.5 py-0.5 rounded border ${
+                    isEnterprise
+                      ? "border-[var(--brand-teal)] text-[var(--brand-teal)] bg-[var(--brand-teal)]/5"
+                      : "border-gray-200 text-gray-600 bg-gray-50"
+                  }`}
+                >
+                  {org.subscriptionPlan.replace(/_/g, " ")}
+                </span>
               )}
             </div>
-            <p
-              className="text-xs font-mono mt-1"
-              style={{ color: "var(--text-muted)" }}
-            >
-              {org.id}
-            </p>
-            {org.address && (
-              <p
-                className="text-sm mt-2 flex items-center gap-1.5"
-                style={{ color: "var(--text-secondary)" }}
-              >
-                <MapPin size={13} /> {org.address}
-              </p>
-            )}
+
+            <div className="flex flex-wrap items-center gap-y-2 gap-x-6">
+              <span className="font-mono text-gray-700 text-xs tracking-tight">
+                ID: {org.id}
+              </span>
+              {org.address && (
+                <div className="flex items-center gap-1.5 text-sm text-gray-600">
+                  <MapPin size={14} className="text-gray-700" />
+                  {org.address}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </Card>
 
-      {/* Metrics */}
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-        {[
-          {
-            label: "Total Orders",
-            value: org.ordersCount ?? 0,
-            icon: <Package size={18} />,
-            accent: "rgba(233,116,116,0.1)",
-            color: "var(--brand-red)",
-          },
-          {
-            label: "Total Members",
-            value: org.members?.length ?? 0,
-            icon: <Users size={18} />,
-            accent: "rgba(0,160,130,0.1)",
-            color: "var(--brand-teal)",
-          },
-          {
-            label: "Created",
-            value: format(new Date(org.createdAt), "MMM d, yyyy"),
-            icon: null,
-            accent: "var(--bg-subtle)",
-            color: "var(--text-secondary)",
-          },
-        ].map((m) => (
-          <div
-            key={m.label}
-            className="bg-white rounded-xl border p-4"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <div className="flex items-center gap-2 mb-1">
-              {m.icon && (
-                <div
-                  className="w-7 h-7 rounded-lg flex items-center justify-center"
-                  style={{ background: m.accent, color: m.color }}
-                >
-                  {m.icon}
-                </div>
-              )}
-              <p
-                className="text-[10px] uppercase tracking-widest font-mono"
-                style={{ color: "var(--text-muted)" }}
-              >
-                {m.label}
-              </p>
-            </div>
-            <p className="font-display text-2xl" style={{ color: m.color }}>
-              {m.value}
-            </p>
-          </div>
-        ))}
+      {/* Metrics Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <MetricCard
+          label="Total Orders"
+          value={org.ordersCount ?? 0}
+          icon={<Package size={18} />}
+          color="var(--brand-red)"
+        />
+        <MetricCard
+          label="Members"
+          value={org.members?.length ?? 0}
+          icon={<Users size={18} />}
+          color="var(--brand-teal)"
+        />
+        <MetricCard
+          label="Est. Date"
+          value={format(new Date(org.createdAt), "MMM d, yyyy")}
+          icon={<Calendar size={18} />}
+          color="gray"
+        />
       </div>
 
-      {/* Members */}
-      <Card title="Members">
+      {/* Members Table */}
+      <Card className="border-none shadow-sm bg-white overflow-hidden">
+        <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+          <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">
+            Registered Members
+          </h3>
+          <span className="text-xs font-mono text-gray-700">
+            {org.members?.length || 0} Total
+          </span>
+        </div>
         <div className="overflow-x-auto">
-          <table className="data-table">
+          <table className="w-full text-left">
             <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Role</th>
-                <th>Status</th>
-                <th>Suspended</th>
-                <th>Joined</th>
+              <tr className="bg-gray-50/50">
+                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
+                  Name
+                </th>
+                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
+                  Email
+                </th>
+                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
+                  Role
+                </th>
+                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700 text-right">
+                  Joined
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-50">
               {!org.members?.length ? (
                 <tr>
                   <td
-                    colSpan={6}
-                    className="text-center py-8 text-sm"
-                    style={{ color: "var(--text-muted)" }}
+                    colSpan={5}
+                    className="text-center py-12 text-gray-700 text-sm italic"
                   >
-                    No members
+                    No members assigned to this organization.
                   </td>
                 </tr>
               ) : (
                 org.members.map((m) => (
                   <tr
                     key={m.userId}
-                    className="cursor-pointer"
+                    className="hover:bg-gray-50/80 cursor-pointer transition-all group"
                     onClick={() => router.push(`/dashboard/users/${m.userId}`)}
                   >
-                    <td
-                      className="font-medium text-sm"
-                      style={{ color: "var(--text-primary)" }}
-                    >
-                      {m.userName}
-                    </td>
-                    <td className="font-mono text-xs">{m.userEmail}</td>
-                    <td>
-                      <StatusBadge status={m.role} />
-                    </td>
-                    <td>
-                      <StatusBadge
-                        status={m.isActive ? "active" : "inactive"}
-                      />
-                    </td>
-                    <td>
-                      {m.isSuspended ? (
-                        <span
-                          className="flex items-center gap-1 text-xs"
-                          style={{ color: "#BE123C" }}
-                        >
-                          <ShieldAlert size={12} /> Suspended
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-medium text-gray-900 group-hover:text-[var(--brand-teal)] transition-colors">
+                          {m.userName}
                         </span>
-                      ) : (
-                        <span
-                          className="text-xs"
-                          style={{ color: "var(--text-muted)" }}
-                        >
-                          —
-                        </span>
-                      )}
+                        {m.isSuspended && (
+                          <div className="flex items-center gap-1 text-[10px] font-bold text-[var(--brand-red)] uppercase tracking-tighter bg-red-50 px-1.5 py-0.5 rounded">
+                            <ShieldAlert size={10} /> Suspended
+                          </div>
+                        )}
+                      </div>
                     </td>
-                    <td
-                      className="font-mono text-xs"
-                      style={{ color: "var(--text-muted)" }}
-                    >
-                      {format(new Date(m.joinedAt), "MMM d, yyyy")}
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-mono text-gray-500">
+                        {m.userEmail}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs text-gray-900 uppercase font-medium">
+                        {m.role == "owner" ? "Vendor" : m.role}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-xs text-gray-900">
+                        <div
+                          className="w-1 h-1 rounded-full"
+                          style={{
+                            background: m.isActive
+                              ? "var(--brand-teal)"
+                              : "#cbd5e1",
+                          }}
+                        />
+                        {m.isActive ? "Active" : "Disabled"}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <span className="text-xs font-mono text-gray-600">
+                        {format(new Date(m.joinedAt), "MMM d, yyyy")}
+                      </span>
                     </td>
                   </tr>
                 ))
@@ -214,6 +211,44 @@ export default function OrgDetailPage() {
           </table>
         </div>
       </Card>
+    </div>
+  );
+}
+
+function MetricCard({
+  label,
+  value,
+  icon,
+  color,
+}: {
+  label: string;
+  value: string | number;
+  icon: React.ReactNode;
+  color: string;
+}) {
+  const isGray = color === "gray";
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm">
+      <div className="flex items-center gap-3 mb-3">
+        <div
+          className="w-8 h-8 rounded-lg flex items-center justify-center"
+          style={{
+            background: isGray ? "#f8fafc" : `${color}10`,
+            color: isGray ? "#64748b" : color,
+          }}
+        >
+          {icon}
+        </div>
+        <p className="text-[10px] uppercase tracking-[0.15em] text-gray-700 font-mono font-bold">
+          {label}
+        </p>
+      </div>
+      <p
+        className="text-2xl font-medium tracking-tight"
+        style={{ color: isGray ? "#0f172a" : color }}
+      >
+        {value}
+      </p>
     </div>
   );
 }

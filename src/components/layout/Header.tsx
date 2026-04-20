@@ -49,7 +49,7 @@ export function Header({ onMenuClick }: HeaderProps) {
         >
           <Menu size={18} />
         </button>
-        <h2 className="font-display text-xl text-gray-900 leading-none">
+        <h2 className="font-body text-3xl font-semibold text-gray-900 leading-none">
           {getTitle()}
         </h2>
       </div>

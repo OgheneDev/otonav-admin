@@ -5,6 +5,16 @@ import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import clsx from "clsx";
 import { createPortal } from "react-dom";
 
+interface InputProps {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  type?: string;
+  className?: string;
+  icon?: ReactNode; // New prop for Lucide icons
+  required?: boolean;
+}
+
 // ── StatusBadge ──────────────────────────────────────────────
 export function StatusBadge({ status }: { status: string }) {
   return (
@@ -49,12 +59,12 @@ export function StatCard({
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1">
           <p
-            className="text-xs uppercase tracking-widest mb-3 font-mono"
+            className="text-xs uppercase tracking-widest mb-3 font-body"
             style={{ color: "var(--text-muted)" }}
           >
             {label}
           </p>
-          <p className="stat-value">{value}</p>
+          <p className=" text-3xl font-semibold font-body">{value}</p>
           {sub && (
             <p className="text-xs mt-1" style={{ color: "var(--text-muted)" }}>
               {sub}
@@ -133,7 +143,7 @@ export function Pagination({
       className="flex items-center justify-between px-5 py-3 border-t"
       style={{ borderColor: "var(--border)" }}
     >
-      <p className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
+      <p className="text-xs font-body" style={{ color: "var(--text-muted)" }}>
         {from}–{to} of {total}
       </p>
       <div className="flex items-center gap-1">
@@ -153,7 +163,7 @@ export function Pagination({
             <button
               key={p}
               onClick={() => onPage(p)}
-              className="w-7 h-7 rounded-lg text-xs font-mono transition-all"
+              className="w-7 h-7 rounded-lg text-xs font-body transition-all"
               style={{
                 background: p === page ? "var(--brand-teal)" : "transparent",
                 color: p === page ? "white" : "var(--text-secondary)",
@@ -177,14 +187,73 @@ export function Pagination({
 }
 
 // ── LoadingSpinner ────────────────────────────────────────────
-export function LoadingSpinner({ text = "Loading…" }: { text?: string }) {
+export function LoadingSpinner({ text = "Syncing logs…" }: { text?: string }) {
   return (
-    <div
-      className="flex items-center justify-center gap-2 py-16"
-      style={{ color: "var(--text-muted)" }}
-    >
-      <Loader2 size={18} className="animate-spin" />
-      <span className="text-sm">{text}</span>
+    <div className="flex flex-col items-center justify-center gap-4 py-20">
+      <div className="relative flex items-center justify-center">
+        {/* Outer subtle pulse ring */}
+        <div className="absolute inset-0 rounded-full bg-[var(--brand-red)]/10 animate-ping opacity-20" />
+
+        {/* The main spinner SVG */}
+        <svg
+          className="animate-spin"
+          width="40"
+          height="40"
+          viewBox="0 0 40 40"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          {/* Background track */}
+          <circle
+            cx="20"
+            cy="20"
+            r="18"
+            stroke="currentColor"
+            strokeWidth="3"
+            className="text-gray-100"
+          />
+          {/* Active brand segment */}
+          <circle
+            cx="20"
+            cy="20"
+            r="18"
+            stroke="url(#spinner_gradient)"
+            strokeWidth="3"
+            strokeLinecap="round"
+            strokeDasharray="80 120"
+          />
+          <defs>
+            <linearGradient
+              id="spinner_gradient"
+              x1="0"
+              y1="0"
+              x2="40"
+              y2="40"
+              gradientUnits="userSpaceOnUse"
+            >
+              <stop stopColor="var(--brand-teal)" />
+              <stop
+                offset="1"
+                stopColor="var(--brand-teal)"
+                stopOpacity="0.2"
+              />
+            </linearGradient>
+          </defs>
+        </svg>
+
+        {/* Minimalist center dot */}
+        <div className="absolute w-1.5 h-1.5 bg-gray-900 rounded-full" />
+      </div>
+
+      {/* Label with mono styling */}
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] text-gray-400">
+          OtoNav System
+        </span>
+        <span className="text-xs font-medium text-gray-600 animate-pulse">
+          {text}
+        </span>
+      </div>
     </div>
   );
 }
@@ -293,31 +362,35 @@ export function Input({
   placeholder,
   type = "text",
   className,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  type?: string;
-  className?: string;
-}) {
+  icon,
+  required,
+}: InputProps) {
   return (
-    <input
-      type={type}
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
-      placeholder={placeholder}
+    <div
       className={clsx(
-        "px-3 py-2 rounded-xl text-sm border outline-none transition-all w-full",
+        "group flex items-center gap-2 px-3 py-2.5 rounded-xl border transition-all duration-200 w-full bg-white",
+        "focus-within:border-[var(--brand-teal)] focus-within:ring-1 focus-within:ring-[var(--brand-teal)]/20",
+        "border-[var(--border)]", // Default border
         className,
       )}
-      style={{
-        background: "white",
-        borderColor: "var(--border)",
-        color: "var(--text-primary)",
-      }}
-      onFocus={(e) => (e.target.style.borderColor = "var(--brand-teal)")}
-      onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
-    />
+    >
+      {/* Icon Slot */}
+      {icon && (
+        <span className="text-gray-400 group-focus-within:text-[var(--brand-teal)] transition-colors">
+          {icon}
+        </span>
+      )}
+
+      {/* Actual Input */}
+      <input
+        type={type}
+        value={value}
+        required={required}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="bg-transparent outline-none w-full text-sm text-[var(--text-primary)] placeholder:text-gray-400"
+      />
+    </div>
   );
 }
 

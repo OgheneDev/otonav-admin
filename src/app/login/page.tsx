@@ -32,39 +32,79 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden" style={{ background: "#F8F8F6" }}>
+    <div
+      className="min-h-screen flex items-center justify-center relative overflow-hidden"
+      style={{ background: "#F8F8F6" }}
+    >
       {/* Background decorations */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-[0.06]" style={{ background: "var(--brand-red)" }} />
-        <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full opacity-[0.06]" style={{ background: "var(--brand-teal)" }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.02]"
-          style={{ background: "conic-gradient(from 0deg, var(--brand-red), var(--brand-teal), var(--brand-red))" }} />
+        <div
+          className="absolute -top-32 -right-32 w-96 h-96 rounded-full opacity-[0.06]"
+          style={{ background: "var(--brand-red)" }}
+        />
+        <div
+          className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full opacity-[0.06]"
+          style={{ background: "var(--brand-teal)" }}
+        />
+        <div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full opacity-[0.02]"
+          style={{
+            background:
+              "conic-gradient(from 0deg, var(--brand-red), var(--brand-teal), var(--brand-red))",
+          }}
+        />
         {/* Grid lines */}
-        <div className="absolute inset-0 opacity-[0.03]"
-          style={{ backgroundImage: "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)", backgroundSize: "48px 48px" }} />
+        <div
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage:
+              "linear-gradient(var(--border) 1px, transparent 1px), linear-gradient(90deg, var(--border) 1px, transparent 1px)",
+            backgroundSize: "48px 48px",
+          }}
+        />
       </div>
 
       <div className="relative w-full max-w-md px-6 page-enter">
         {/* Header */}
         <div className="text-center mb-10">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-5 shadow-lg"
-            style={{ background: "linear-gradient(135deg, var(--brand-red), #c85c5c)" }}>
+          <div
+            className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-5 shadow-lg"
+            style={{
+              background: "linear-gradient(135deg, var(--brand-red), #c85c5c)",
+            }}
+          >
             <Shield size={28} className="text-white" />
           </div>
-          <h1 className="font-display text-4xl text-gray-900 mb-1">OtoNav</h1>
-          <p className="text-xs tracking-[0.25em] uppercase" style={{ color: "var(--text-muted)" }}>
+          <h1 className="font-body text-4xl text-gray-900 mb-1">OtoNav</h1>
+          <p
+            className="text-xs tracking-[0.25em] uppercase"
+            style={{ color: "var(--text-muted)" }}
+          >
             Admin Console
           </p>
         </div>
 
         {/* Card */}
-        <div className="bg-white rounded-3xl shadow-xl border p-8" style={{ borderColor: "var(--border)" }}>
-          <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
+        <div
+          className="bg-white rounded-3xl shadow-xl border p-8"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <p
+            className="text-sm mb-6"
+            style={{ color: "var(--text-secondary)" }}
+          >
             Sign in to access the administration panel.
           </p>
 
           {error && (
-            <div className="flex items-center gap-2 p-3 rounded-xl mb-5 text-sm" style={{ background: "#FFF1F2", color: "#BE123C", border: "1px solid #FDA4AF" }}>
+            <div
+              className="flex items-center gap-2 p-3 rounded-xl mb-5 text-sm"
+              style={{
+                background: "#FFF1F2",
+                color: "#BE123C",
+                border: "1px solid #FDA4AF",
+              }}
+            >
               <AlertCircle size={15} className="shrink-0" />
               {error}
             </div>
@@ -72,7 +112,10 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="block text-xs font-mono font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              <label
+                className="block text-xs font-mono font-medium mb-1.5 uppercase tracking-wider"
+                style={{ color: "var(--text-muted)" }}
+              >
                 Email
               </label>
               <input
@@ -87,13 +130,18 @@ export default function LoginPage() {
                   borderColor: "var(--border)",
                   color: "var(--text-primary)",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = "var(--brand-teal)")}
+                onFocus={(e) =>
+                  (e.target.style.borderColor = "var(--brand-teal)")
+                }
                 onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
               />
             </div>
 
             <div>
-              <label className="block text-xs font-mono font-medium mb-1.5 uppercase tracking-wider" style={{ color: "var(--text-muted)" }}>
+              <label
+                className="block text-xs font-mono font-medium mb-1.5 uppercase tracking-wider"
+                style={{ color: "var(--text-muted)" }}
+              >
                 Password
               </label>
               <div className="relative">
@@ -109,7 +157,9 @@ export default function LoginPage() {
                     borderColor: "var(--border)",
                     color: "var(--text-primary)",
                   }}
-                  onFocus={(e) => (e.target.style.borderColor = "var(--brand-teal)")}
+                  onFocus={(e) =>
+                    (e.target.style.borderColor = "var(--brand-teal)")
+                  }
                   onBlur={(e) => (e.target.style.borderColor = "var(--border)")}
                 />
                 <button
@@ -127,7 +177,10 @@ export default function LoginPage() {
               type="submit"
               disabled={loading}
               className="w-full py-3.5 rounded-xl text-white text-sm font-medium transition-all mt-2 flex items-center justify-center gap-2 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-60"
-              style={{ background: "linear-gradient(135deg, var(--brand-red), #c85c5c)" }}
+              style={{
+                background:
+                  "linear-gradient(135deg, var(--brand-red), #c85c5c)",
+              }}
             >
               {loading ? (
                 <>
@@ -141,7 +194,10 @@ export default function LoginPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs mt-6" style={{ color: "var(--text-faint)" }}>
+        <p
+          className="text-center text-xs mt-6"
+          style={{ color: "var(--text-faint)" }}
+        >
           OtoNav Admin v1.0 · Restricted Access
         </p>
       </div>

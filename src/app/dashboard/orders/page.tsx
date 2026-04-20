@@ -4,12 +4,12 @@ import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { getOrders } from "@/lib/api";
 import { Order, Pagination as PaginationType } from "@/types";
-import { Card, StatusBadge, Pagination, LoadingSpinner, EmptyState, Select, SkeletonRow } from "@/components/ui";
+import { Card, Pagination, EmptyState, SkeletonRow } from "@/components/ui";
 import { Package } from "lucide-react";
 import { format } from "date-fns";
 
-const STATUS_OPTIONS = [
-  { label: "All Statuses", value: "all" },
+const TABS = [
+  { label: "All Orders", value: "all" },
   { label: "Pending", value: "pending" },
   { label: "Confirmed", value: "confirmed" },
   { label: "In Transit", value: "in_transit" },
@@ -28,7 +28,11 @@ export default function OrdersPage() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await getOrders({ page, limit: 20, status: status !== "all" ? status : undefined });
+      const res = await getOrders({
+        page,
+        limit: 20,
+        status: status !== "all" ? status : undefined,
+      });
       setOrders(res.data.data.orders);
       setPagination(res.data.data.pagination);
     } catch (err) {
@@ -38,48 +42,115 @@ export default function OrdersPage() {
     }
   }, [page, status]);
 
-  useEffect(() => { load(); }, [load]);
-  useEffect(() => { setPage(1); }, [status]);
+  useEffect(() => {
+    load();
+  }, [load]);
+  useEffect(() => {
+    setPage(1);
+  }, [status]);
+
+  const formatStatus = (raw: string) => {
+    return raw.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
+  };
 
   return (
-    <div className="space-y-5">
-      <div className="flex items-center gap-3">
-        <Select value={status} onChange={setStatus} options={STATUS_OPTIONS} />
-        <p className="text-xs font-mono" style={{ color: "var(--text-muted)" }}>
-          {pagination ? `${pagination.total} total` : ""}
+    <div className="space-y-6">
+      {/* Navigation Tabs */}
+      <div
+        className="flex items-center justify-between border-b"
+        style={{ borderColor: "var(--border)" }}
+      >
+        <div className="flex gap-8">
+          {TABS.map((tab) => {
+            const isActive = status === tab.value;
+            return (
+              <button
+                key={tab.value}
+                onClick={() => setStatus(tab.value)}
+                className="pb-4 text-sm font-medium transition-all relative"
+                style={{
+                  color: isActive ? "var(--brand-teal)" : "var(--text-primary)",
+                }}
+              >
+                {tab.label}
+                {isActive && (
+                  <div
+                    className="absolute bottom-0 left-0 right-0 h-0.5"
+                    style={{ background: "var(--brand-teal)" }}
+                  />
+                )}
+              </button>
+            );
+          })}
+        </div>
+        <p className="text-[10px] tracking-widest mb-4 font-mono text-gray-900">
+          {pagination ? `${pagination.total} TOTAL` : ""}
         </p>
       </div>
 
-      <Card>
+      <Card className="border-none shadow-sm">
         <div className="overflow-x-auto">
-          <table className="data-table">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr>
-                <th>Order #</th>
-                <th>Customer</th>
-                <th>Organization</th>
-                <th>Status</th>
-                <th>Created</th>
-                <th>Delivered</th>
+              <tr className="border-b" style={{ borderColor: "var(--border)" }}>
+                <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-medium text-gray-900 font-mono">
+                  Order #
+                </th>
+                <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-medium text-gray-900 font-mono">
+                  Customer
+                </th>
+                <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-medium text-gray-900 font-mono">
+                  Status
+                </th>
+                <th className="px-6 py-4 text-[10px] uppercase tracking-widest font-medium text-gray-900 font-mono text-right">
+                  Created
+                </th>
               </tr>
             </thead>
-            <tbody>
+            <tbody
+              className="divide-y"
+              style={{ borderColor: "var(--border)" }}
+            >
               {loading ? (
-                Array.from({ length: 8 }).map((_, i) => <SkeletonRow key={i} cols={6} />)
+                Array.from({ length: 8 }).map((_, i) => (
+                  <SkeletonRow key={i} cols={4} />
+                ))
               ) : orders.length === 0 ? (
-                <tr><td colSpan={6}><EmptyState icon={<Package size={20} />} title="No orders found" description="Try adjusting the status filter" /></td></tr>
+                <tr>
+                  <td colSpan={4}>
+                    <EmptyState
+                      icon={<Package size={20} />}
+                      title="No orders found"
+                    />
+                  </td>
+                </tr>
               ) : (
                 orders.map((order) => (
-                  <tr key={order.id} className="cursor-pointer" onClick={() => router.push(`/dashboard/orders/${order.id}`)}>
-                    <td className="font-mono text-xs font-medium" style={{ color: "var(--text-primary)" }}>{order.orderNumber}</td>
-                    <td className="text-sm">{order.customerName || "—"}</td>
-                    <td className="text-sm">{order.orgName || "—"}</td>
-                    <td><StatusBadge status={order.status} /></td>
-                    <td className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>
-                      {format(new Date(order.createdAt), "MMM d, yyyy")}
+                  <tr
+                    key={order.id}
+                    className="hover:bg-gray-50 transition-colors cursor-pointer group"
+                    onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                  >
+                    <td className="px-6 py-5">
+                      <span className="font-mono text-xs text-gray-900">
+                        #{order.orderNumber}
+                      </span>
                     </td>
-                    <td className="font-mono text-xs" style={{ color: "var(--text-muted)" }}>
-                      {order.deliveredAt ? format(new Date(order.deliveredAt), "MMM d, yyyy") : "—"}
+                    <td className="px-6 py-5">
+                      <div className="text-sm text-gray-900">
+                        {order.customerName || "Guest User"}
+                      </div>
+                      <div className="text-xs text-gray-500 mt-0.5">
+                        {order.orgName || "Direct Order"}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5">
+                      <div className="flex items-center gap-2 text-sm text-gray-900">
+                        {formatStatus(order.status)}
+                      </div>
+                    </td>
+                    <td className="px-6 py-5 text-right font-mono text-xs text-gray-900">
+                      {format(new Date(order.createdAt), "dd MMM, yyyy")}
                     </td>
                   </tr>
                 ))
@@ -87,7 +158,20 @@ export default function OrdersPage() {
             </tbody>
           </table>
         </div>
-        {pagination && <Pagination page={page} pages={pagination.pages} total={pagination.total} limit={20} onPage={setPage} />}
+        {pagination && (
+          <div
+            className="p-4 border-t"
+            style={{ borderColor: "var(--border)" }}
+          >
+            <Pagination
+              page={page}
+              pages={pagination.pages}
+              total={pagination.total}
+              limit={20}
+              onPage={setPage}
+            />
+          </div>
+        )}
       </Card>
     </div>
   );

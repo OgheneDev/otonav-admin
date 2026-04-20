@@ -11,15 +11,20 @@ interface AuthState {
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
-  admin: null,
+  admin:
+    typeof window !== "undefined"
+      ? JSON.parse(localStorage.getItem("admin_data") || "null")
+      : null,
   token: Cookies.get("admin_token") || null,
   isAuthenticated: !!Cookies.get("admin_token"),
   setAuth: (admin, token) => {
     Cookies.set("admin_token", token, { expires: 1 });
+    localStorage.setItem("admin_data", JSON.stringify(admin));
     set({ admin, token, isAuthenticated: true });
   },
   clearAuth: () => {
     Cookies.remove("admin_token");
+    localStorage.removeItem("admin_data");
     set({ admin: null, token: null, isAuthenticated: false });
   },
 }));
