@@ -1,0 +1,8 @@
+{
+  "/dashboard/orders/[orderId]/page": "app/dashboard/orders/[orderId]/page.js",
+  "/dashboard/orders/page": "app/dashboard/orders/page.js",
+  "/dashboard/verified-riders/page": "app/dashboard/verified-riders/page.js",
+  "/dashboard/waitlist/page": "app/dashboard/waitlist/page.js",
+  "/dashboard/analytics/page": "app/dashboard/analytics/page.js",
+  "/dashboard/page": "app/dashboard/page.js"
+}

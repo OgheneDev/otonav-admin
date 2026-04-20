@@ -1,0 +1,217 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&family=DM+Mono:wght@400;500&family=Poppins:wght@300;400;500;600;700&display=swap");
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "DM Serif Display", serif;
+  --font-body: "Poppins", sans-serif;
+  --font-mono: "DM Mono", monospace;
+  --font-poppins: "Poppins", sans-serif;
+
+  --brand-red: #e97474;
+  --brand-red-light: #ff7b7b;
+  --brand-teal: #00a082;
+  --brand-teal-light: #10b981;
+
+  --bg-base: #f8f8f6;
+  --bg-panel: #ffffff;
+  --bg-subtle: #f2f2ee;
+  --border: #e8e8e2;
+  --border-strong: #d0d0c8;
+
+  --text-primary: #1a1a16;
+  --text-secondary: #5c5c52;
+  --text-muted: #9c9c90;
+  --text-faint: #c8c8be;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: var(--font-body);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
+
+/* Selection */
+::selection {
+  background: rgba(0, 160, 130, 0.15);
+  color: var(--brand-teal);
+}
+
+/* Utility classes */
+.font-display {
+  font-family: var(--font-display);
+}
+.font-mono {
+  font-family: var(--font-mono);
+}
+
+.stat-value {
+  font-family: var(--font-display);
+  font-size: 2.5rem;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 100px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.03em;
+  font-family: var(--font-mono);
+}
+
+.badge-pending {
+  background: #fff7ed;
+  color: #c05621;
+  border: 1px solid #fdba74;
+}
+.badge-confirmed {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+.badge-in_transit {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.badge-delivered {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.badge-cancelled {
+  background: #fff1f2;
+  color: #be123c;
+  border: 1px solid #fda4af;
+}
+.badge-active {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.badge-inactive {
+  background: #f9fafb;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+.badge-admin {
+  background: #fdf4ff;
+  color: #7c3aed;
+  border: 1px solid #ddd6fe;
+}
+.badge-vendor {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #93c5fd;
+}
+.badge-rider {
+  background: #fff7ed;
+  color: #c05621;
+  border: 1px solid #fdba74;
+}
+.badge-customer {
+  background: #f0fdf4;
+  color: #15803d;
+  border: 1px solid #86efac;
+}
+.badge-growth {
+  background: rgba(0, 160, 130, 0.08);
+  color: var(--brand-teal);
+  border: 1px solid rgba(0, 160, 130, 0.2);
+}
+.badge-pro {
+  background: rgba(233, 116, 116, 0.08);
+  color: var(--brand-red);
+  border: 1px solid rgba(233, 116, 116, 0.2);
+}
+.badge-starter {
+  background: #f9fafb;
+  color: #6b7280;
+  border: 1px solid #e5e7eb;
+}
+
+/* Page animation */
+.page-enter {
+  animation: slideUp 0.35s ease forwards;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Table */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.data-table th {
+  text-align: left;
+  padding: 10px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  background: var(--bg-subtle);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-mono);
+}
+
+.data-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  transition: background 0.15s;
+}
+
+.data-table tr:hover td {
+  background: var(--bg-subtle);
+}
+
+.data-table tr:last-child td {
+  border-bottom: none;
+}
