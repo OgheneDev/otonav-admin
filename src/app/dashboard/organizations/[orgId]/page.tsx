@@ -13,6 +13,8 @@ import {
   Users,
   ShieldAlert,
   Calendar,
+  ChevronRight,
+  Mail,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -43,7 +45,7 @@ export default function OrgDetailPage() {
     .includes("enterprise");
 
   return (
-    <div className="space-y-8 max-w-5xl">
+    <div className="space-y-8 max-w-5xl p-4 md:p-0">
       {/* Navigation */}
       <button
         onClick={() => router.back()}
@@ -58,7 +60,7 @@ export default function OrgDetailPage() {
 
       {/* Profile Header */}
       <Card className="border-none shadow-sm overflow-hidden bg-white">
-        <div className="p-8 flex flex-col md:flex-row md:items-center gap-6">
+        <div className="p-6 md:p-8 flex flex-col md:flex-row md:items-center gap-6">
           <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-[var(--brand-teal)]/10 text-[var(--brand-teal)] shrink-0">
             <Building2 size={32} />
           </div>
@@ -116,49 +118,93 @@ export default function OrgDetailPage() {
         />
       </div>
 
-      {/* Members Table */}
-      <Card className="border-none shadow-sm bg-white overflow-hidden">
-        <div className="px-6 py-5 border-b border-gray-50 flex items-center justify-between">
+      {/* Members Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between px-1">
           <h3 className="text-sm font-bold uppercase tracking-wider text-gray-900">
             Registered Members
           </h3>
-          <span className="text-xs font-mono text-gray-700">
+          <span className="text-xs font-mono text-gray-500">
             {org.members?.length || 0} Total
           </span>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="bg-gray-50/50">
-                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
-                  Name
-                </th>
-                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
-                  Email
-                </th>
-                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700 text-right">
-                  Joined
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-50">
-              {!org.members?.length ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="text-center py-12 text-gray-700 text-sm italic"
-                  >
-                    No members assigned to this organization.
-                  </td>
+
+        {/* MOBILE MEMBERS LIST (Visible on small screens) */}
+        <div className="grid grid-cols-1 gap-3 md:hidden">
+          {!org.members?.length ? (
+            <p className="text-center py-8 text-gray-400 text-sm italic">
+              No members found.
+            </p>
+          ) : (
+            org.members.map((m) => (
+              <div
+                key={m.userId}
+                onClick={() => router.push(`/dashboard/users/${m.userId}`)}
+                className="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-transform"
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div className="space-y-0.5">
+                    <p className="font-bold text-gray-900">{m.userName}</p>
+                    <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                      <Mail size={12} /> {m.userEmail}
+                    </div>
+                  </div>
+                  <ChevronRight size={16} className="text-gray-300" />
+                </div>
+
+                <div className="flex items-center justify-between mt-4 pt-3 border-t border-gray-50">
+                  <div className="flex items-center gap-2">
+                    <div
+                      className="w-1.5 h-1.5 rounded-full"
+                      style={{
+                        background: m.isActive
+                          ? "var(--brand-teal)"
+                          : "#cbd5e1",
+                      }}
+                    />
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-gray-600">
+                      {m.isActive ? "Active" : "Disabled"}
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold uppercase py-0.5 px-2 bg-gray-100 rounded text-gray-700">
+                    {m.role === "owner" ? "Vendor" : m.role}
+                  </span>
+                </div>
+                {m.isSuspended && (
+                  <div className="mt-3 flex items-center justify-center gap-1.5 py-1.5 bg-red-50 text-[var(--brand-red)] rounded-lg text-[10px] font-bold uppercase tracking-tighter">
+                    <ShieldAlert size={12} /> Account Suspended
+                  </div>
+                )}
+              </div>
+            ))
+          )}
+        </div>
+
+        {/* DESKTOP MEMBERS TABLE (Hidden on mobile) */}
+        <Card className="hidden md:block border-none shadow-sm bg-white overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-gray-50/50">
+                  <th className="px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
+                    Name
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
+                    Email
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
+                    Role
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700">
+                    Status
+                  </th>
+                  <th className="px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-700 text-right">
+                    Joined
+                  </th>
                 </tr>
-              ) : (
-                org.members.map((m) => (
+              </thead>
+              <tbody className="divide-y divide-gray-50">
+                {org.members?.map((m) => (
                   <tr
                     key={m.userId}
                     className="hover:bg-gray-50/80 cursor-pointer transition-all group"
@@ -183,7 +229,7 @@ export default function OrgDetailPage() {
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-xs text-gray-900 uppercase font-medium">
-                        {m.role == "owner" ? "Vendor" : m.role}
+                        {m.role === "owner" ? "Vendor" : m.role}
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -205,12 +251,12 @@ export default function OrgDetailPage() {
                       </span>
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </Card>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </div>
   );
 }
