@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   ArrowRight,
   TrendingUp,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -47,18 +48,18 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="max-w-[1600px] mx-auto space-y-10 p-2">
+    <div className="max-w-[1600px] mx-auto space-y-10 p-4 md:p-2">
       {/* Header Section */}
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-medium tracking-tight text-gray-900">
+          <h2 className="text-2xl font-medium tracking-tight text-gray-900 text-center md:text-start">
             Good day, {admin?.name || "Admin"}
           </h2>
-          <p className="text-gray-600 mt-1 text-sm">
+          <p className="text-gray-600 mt-1 text-sm text-center md:text-start">
             Overview and performance of the OtoNav network.
           </p>
         </div>
-        <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg">
+        <div className="flex items-center justify-center md:justify-start gap-2 px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-lg">
           <TrendingUp size={14} className="text-[var(--brand-teal)]" />
           <span className="text-[10px] font-mono font-bold uppercase tracking-widest text-gray-900">
             Live Network Status
@@ -91,8 +92,7 @@ export default function DashboardPage() {
           />
         </div>
 
-        {/* Brand Verified Banner */}
-        <div className="flex items-center gap-3 px-5 py-3 bg-white border border-[var(--brand-teal)]/20 rounded-2xl w-fit shadow-sm">
+        <div className="flex items-center gap-3 px-5 py-3 bg-white border border-[var(--brand-teal)]/20 rounded-2xl w-full md:w-fit shadow-sm">
           <div className="bg-[var(--brand-teal)]/10 p-1.5 rounded-lg">
             <ShieldCheck size={18} style={{ color: "var(--brand-teal)" }} />
           </div>
@@ -100,15 +100,15 @@ export default function DashboardPage() {
             <span className="font-semibold text-[var(--brand-red)]">
               {stats?.verifiedRiders ?? 0}
             </span>{" "}
-            Verified Riders currently active on the network
+            Verified Riders active
           </span>
         </div>
       </section>
 
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-        {/* Recent Orders Table */}
-        <Card className="xl:col-span-2 border-none shadow-sm overflow-hidden bg-white">
-          <div className="flex items-center justify-between px-6 py-5 border-b border-gray-50">
+        {/* Recent Orders Section */}
+        <div className="xl:col-span-2 space-y-4">
+          <div className="flex items-center justify-between px-1">
             <h3 className="text-sm font-medium uppercase tracking-wider text-gray-900">
               Recent Orders
             </h3>
@@ -116,42 +116,85 @@ export default function DashboardPage() {
               href="/dashboard/orders"
               className="text-xs text-[var(--brand-teal)] hover:underline flex items-center gap-1"
             >
-              View all orders <ArrowRight size={14} />
+              View all <ArrowRight size={14} />
             </Link>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-gray-50/50">
-                  <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
-                    Order #
-                  </th>
-                  <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
-                    Organization
-                  </th>
-                  <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400 text-right">
-                    Created
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {recentOrders.length === 0 ? (
-                  <tr>
-                    <td
-                      colSpan={4}
-                      className="text-center py-12 text-gray-400 text-sm"
-                    >
-                      No recent orders found.
-                    </td>
+
+          {/* MOBILE CARDS VIEW (Visible on small screens) */}
+          <div className="grid grid-cols-1 gap-3 md:hidden">
+            {recentOrders.length === 0 ? (
+              <div className="p-8 text-center text-gray-400 text-sm bg-white rounded-2xl border border-gray-100">
+                No recent orders found.
+              </div>
+            ) : (
+              recentOrders.map((order) => (
+                <div
+                  key={order.id}
+                  onClick={() => router.push(`/dashboard/orders/${order.id}`)}
+                  className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-transform"
+                >
+                  <div className="flex justify-between items-start mb-3">
+                    <span className="font-mono text-xs font-bold text-gray-900">
+                      #{order.orderNumber}
+                    </span>
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+                      <div
+                        className="w-1.5 h-1.5 rounded-full"
+                        style={{
+                          background:
+                            order.status === "pending"
+                              ? "var(--brand-red)"
+                              : "var(--brand-teal)",
+                        }}
+                      />
+                      {humanizeStatus(order.status)}
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end">
+                    <div>
+                      <p className="text-xs text-gray-500 mb-0.5">
+                        Organization
+                      </p>
+                      <p className="text-sm font-medium text-gray-900">
+                        {order.orgName}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[10px] text-gray-400 font-mono">
+                        {format(new Date(order.createdAt), "MMM d, yyyy")}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+
+          {/* DESKTOP TABLE VIEW (Hidden on mobile) */}
+          <Card className="hidden md:block border-none shadow-sm overflow-hidden bg-white">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="bg-gray-50/50">
+                    <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
+                      Order #
+                    </th>
+                    <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
+                      Organization
+                    </th>
+                    <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
+                      Status
+                    </th>
+                    <th className="px-6 py-3 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400 text-right">
+                      Created
+                    </th>
                   </tr>
-                ) : (
-                  recentOrders.map((order) => (
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                  {recentOrders.map((order) => (
                     <tr
                       key={order.id}
-                      className="hover:bg-gray-50/80 cursor-pointer transition-all group"
+                      className="hover:bg-gray-50/80 cursor-pointer transition-all"
                       onClick={() =>
                         router.push(`/dashboard/orders/${order.id}`)
                       }
@@ -180,12 +223,12 @@ export default function DashboardPage() {
                         {format(new Date(order.createdAt), "MMM d, yyyy")}
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
-        </Card>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </Card>
+        </div>
 
         {/* Quick Actions Panel */}
         <div className="space-y-4">

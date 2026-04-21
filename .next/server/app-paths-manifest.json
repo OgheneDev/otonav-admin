@@ -1,10 +1,7 @@
 {
-  "/login/page": "app/login/page.js",
-  "/dashboard/orders/page": "app/dashboard/orders/page.js",
-  "/dashboard/page": "app/dashboard/page.js",
   "/dashboard/users/page": "app/dashboard/users/page.js",
   "/dashboard/organizations/page": "app/dashboard/organizations/page.js",
-  "/dashboard/waitlist/page": "app/dashboard/waitlist/page.js",
+  "/dashboard/orders/page": "app/dashboard/orders/page.js",
   "/dashboard/verified-riders/page": "app/dashboard/verified-riders/page.js",
-  "/dashboard/analytics/page": "app/dashboard/analytics/page.js"
+  "/dashboard/waitlist/page": "app/dashboard/waitlist/page.js"
 }

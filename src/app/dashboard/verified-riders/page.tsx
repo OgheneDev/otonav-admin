@@ -29,6 +29,8 @@ import {
   EyeOff,
   User,
   Lock,
+  BarChart3,
+  Trash2,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -72,11 +74,11 @@ export default function VerifiedRidersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-0">
       {/* Page Header */}
-      <div className="flex items-end justify-between border-b border-gray-100 pb-6">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-gray-100 pb-6">
         <div>
-          <p className="text-xs font-mono text-gray-700 mt-1">
+          <p className="text-xs font-mono text-gray-700 mt-1 uppercase tracking-widest">
             {pagination
               ? `${pagination.total} Priority Riders Registered`
               : "Loading fleet..."}
@@ -84,13 +86,112 @@ export default function VerifiedRidersPage() {
         </div>
         <Button
           onClick={() => setShowCreate(true)}
-          className="bg-gray-900 hover:bg-black text-white"
+          className="bg-gray-900 hover:bg-black text-white w-full sm:w-auto flex justify-center gap-2"
         >
           <Plus size={16} /> Add Verified Rider
         </Button>
       </div>
 
-      <Card className="border-none shadow-sm overflow-hidden bg-white">
+      {/* MOBILE CARDS VIEW */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {loading ? (
+          Array.from({ length: 4 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-48 bg-gray-100 animate-pulse rounded-2xl"
+            />
+          ))
+        ) : riders.length === 0 ? (
+          <EmptyState
+            icon={<Bike size={32} className="text-gray-200" />}
+            title="Fleet Empty"
+          />
+        ) : (
+          riders.map((rider) => {
+            const rate = rider.stats?.totalAssignments
+              ? Math.round(
+                  (rider.stats.completedAssignments /
+                    rider.stats.totalAssignments) *
+                    100,
+                )
+              : 0;
+
+            return (
+              <div
+                key={rider.id}
+                className="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-sm font-bold bg-[var(--brand-teal)] shadow-inner">
+                      {rider.name?.charAt(0)?.toUpperCase() || "R"}
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-gray-900">
+                        {rider.name || "Unnamed Rider"}
+                      </h4>
+                      <p className="text-[10px] font-mono text-gray-400">
+                        ID: {rider.id.slice(-8)}
+                      </p>
+                    </div>
+                  </div>
+                  <StatusBadge
+                    status={rider.isActive ? "active" : "inactive"}
+                  />
+                </div>
+
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Mail size={14} className="text-gray-300" /> {rider.email}
+                  </div>
+                  <div className="flex items-center gap-2 text-xs text-gray-600">
+                    <Phone size={14} className="text-gray-300" />{" "}
+                    {rider.phoneNumber || "No Phone"}
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 py-3 border-t border-gray-50 mb-4">
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">
+                      Assignments
+                    </p>
+                    <p className="text-sm font-mono font-bold text-gray-900">
+                      {rider.stats?.totalAssignments ?? 0}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-gray-400 uppercase font-bold tracking-widest mb-1">
+                      Success Rate
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-mono font-bold text-[var(--brand-teal)]">
+                        {rate}%
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <Button
+                  disabled={removingId === rider.id}
+                  onClick={() => handleRemove(rider.id)}
+                  className="w-full bg-red-50 text-[var(--brand-red)] hover:bg-red-100 border-none shadow-none flex justify-center gap-2 text-xs h-10"
+                >
+                  {removingId === rider.id ? (
+                    <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
+                  ) : (
+                    <>
+                      <ShieldX size={16} /> Revoke Verification
+                    </>
+                  )}
+                </Button>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* DESKTOP TABLE VIEW */}
+      <Card className="hidden md:block border-none shadow-sm overflow-hidden bg-white">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -101,7 +202,7 @@ export default function VerifiedRidersPage() {
                 <th className="px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
                   Contact Details
                 </th>
-                <th className="px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
+                <th className="px-6 py-4 text-[10px) font-mono font-bold uppercase tracking-widest text-gray-400">
                   Assigned
                 </th>
                 <th className="px-6 py-4 text-[10px] font-mono font-bold uppercase tracking-widest text-gray-400">
@@ -116,101 +217,88 @@ export default function VerifiedRidersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {loading ? (
-                Array.from({ length: 6 }).map((_, i) => (
-                  <SkeletonRow key={i} cols={6} />
-                ))
-              ) : riders.length === 0 ? (
-                <tr>
-                  <td colSpan={6}>
-                    <EmptyState
-                      icon={<Bike size={32} className="text-gray-200" />}
-                      title="Fleet Empty"
-                      description="No riders have been granted verification status yet."
-                    />
-                  </td>
-                </tr>
-              ) : (
-                riders.map((rider) => {
-                  const rate = rider.stats?.totalAssignments
-                    ? Math.round(
-                        (rider.stats.completedAssignments /
-                          rider.stats.totalAssignments) *
-                          100,
-                      )
-                    : 0;
+              {loading
+                ? Array.from({ length: 6 }).map((_, i) => (
+                    <SkeletonRow key={i} cols={6} />
+                  ))
+                : riders.map((rider) => {
+                    const rate = rider.stats?.totalAssignments
+                      ? Math.round(
+                          (rider.stats.completedAssignments /
+                            rider.stats.totalAssignments) *
+                            100,
+                        )
+                      : 0;
 
-                  return (
-                    <tr
-                      key={rider.id}
-                      className="hover:bg-gray-50/50 transition-colors group"
-                    >
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold bg-[var(--brand-teal)] shadow-sm">
-                            {rider.name?.charAt(0)?.toUpperCase() || "R"}
+                    return (
+                      <tr
+                        key={rider.id}
+                        className="hover:bg-gray-50/50 transition-colors group"
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="w-9 h-9 rounded-xl flex items-center justify-center text-white text-xs font-bold bg-[var(--brand-teal)] shadow-sm">
+                              {rider.name?.charAt(0)?.toUpperCase() || "R"}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {rider.name || "Unnamed Rider"}
+                              </p>
+                              <p className="text-[10px] font-mono text-gray-400 tracking-tighter">
+                                ID: {rider.id.slice(-8)}
+                              </p>
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-sm font-medium text-gray-900">
-                              {rider.name || "Unnamed Rider"}
-                            </p>
-                            <p className="text-[10px] font-mono text-gray-400 tracking-tighter">
-                              ID: {rider.id.slice(-8)}
-                            </p>
+                        </td>
+                        <td className="px-6 py-4 space-y-1">
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <Mail size={12} className="text-gray-300" />{" "}
+                            {rider.email}
                           </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 space-y-1">
-                        <div className="flex items-center gap-2 text-xs text-gray-600">
-                          <Mail size={12} className="text-gray-300" />{" "}
-                          {rider.email}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-600">
-                          <Phone size={12} className="text-gray-300" />{" "}
-                          {rider.phoneNumber || "—"}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="text-sm font-mono font-medium text-gray-900">
-                          {rider.stats?.totalAssignments ?? 0}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <div className="flex-1 h-1 w-12 bg-gray-100 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-[var(--brand-teal)]"
-                              style={{ width: `${rate}%` }}
-                            />
+                          <div className="flex items-center gap-2 text-xs text-gray-600">
+                            <Phone size={12} className="text-gray-300" />{" "}
+                            {rider.phoneNumber || "—"}
                           </div>
-                          <span className="text-xs font-mono font-bold text-[var(--brand-teal)]">
-                            {rate}%
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-sm font-mono font-medium text-gray-900">
+                            {rider.stats?.totalAssignments ?? 0}
                           </span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <StatusBadge
-                          status={rider.isActive ? "active" : "inactive"}
-                        />
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <button
-                          disabled={removingId === rider.id}
-                          onClick={() => handleRemove(rider.id)}
-                          title="Remove Verified rider"
-                          className="text-gray-400 hover:text-[var(--brand-red)] transition-colors p-2 rounded-lg hover:bg-red-50"
-                        >
-                          {removingId === rider.id ? (
-                            <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
-                          ) : (
-                            <ShieldX size={18} />
-                          )}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <div className="flex-1 h-1 w-12 bg-gray-100 rounded-full overflow-hidden">
+                              <div
+                                className="h-full bg-[var(--brand-teal)]"
+                                style={{ width: `${rate}%` }}
+                              />
+                            </div>
+                            <span className="text-xs font-mono font-bold text-[var(--brand-teal)]">
+                              {rate}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <StatusBadge
+                            status={rider.isActive ? "active" : "inactive"}
+                          />
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          <button
+                            disabled={removingId === rider.id}
+                            onClick={() => handleRemove(rider.id)}
+                            className="text-gray-400 hover:text-[var(--brand-red)] transition-colors p-2 rounded-lg hover:bg-red-50"
+                          >
+                            {removingId === rider.id ? (
+                              <div className="w-4 h-4 border-2 border-current border-t-transparent animate-spin rounded-full" />
+                            ) : (
+                              <ShieldX size={18} />
+                            )}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
             </tbody>
           </table>
         </div>

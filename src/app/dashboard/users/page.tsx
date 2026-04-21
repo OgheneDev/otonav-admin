@@ -11,7 +11,7 @@ import {
   Input,
   SkeletonRow,
 } from "@/components/ui";
-import { Users, Search, Check, X } from "lucide-react";
+import { Users, Search, Check, X, ShieldCheck, Mail } from "lucide-react";
 import { format } from "date-fns";
 import { useDebounce } from "@/lib/useDebounce";
 
@@ -56,6 +56,7 @@ export default function UsersPage() {
   useEffect(() => {
     load();
   }, [load]);
+
   useEffect(() => {
     setPage(1);
   }, [role, debouncedSearch]);
@@ -66,7 +67,7 @@ export default function UsersPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-4 md:p-0">
       {/* Search and Filters */}
       <div className="flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -82,14 +83,14 @@ export default function UsersPage() {
               className="pl-10 border-gray-200 focus:border-[var(--brand-teal)] transition-all"
             />
           </div>
-          <p className="font-mono text-[10px] tracking-widest text-gray-900 uppercase">
+          <p className="font-mono text-[10px] tracking-widest text-gray-900 uppercase hidden sm:block">
             {pagination ? `${pagination.total} Accounts` : ""}
           </p>
         </div>
 
         {/* Brand Tabs for Roles */}
         <div
-          className="flex items-center gap-8 border-b"
+          className="flex items-center gap-6 md:gap-8 border-b overflow-x-auto no-scrollbar"
           style={{ borderColor: "var(--border)" }}
         >
           {ROLE_TABS.map((tab) => {
@@ -98,9 +99,9 @@ export default function UsersPage() {
               <button
                 key={tab.value}
                 onClick={() => setRole(tab.value)}
-                className="pb-4 text-sm font-medium transition-all relative"
+                className="pb-4 text-sm font-medium transition-all relative whitespace-nowrap"
                 style={{
-                  color: isActive ? "var(--brand-teal)" : "text-gray-900",
+                  color: isActive ? "var(--brand-teal)" : "var(--text-muted)",
                 }}
               >
                 {tab.label}
@@ -116,7 +117,68 @@ export default function UsersPage() {
         </div>
       </div>
 
-      <Card className="border-none shadow-sm overflow-hidden">
+      {/* MOBILE LIST VIEW */}
+      <div className="grid grid-cols-1 gap-4 md:hidden">
+        {loading ? (
+          Array.from({ length: 5 }).map((_, i) => (
+            <div
+              key={i}
+              className="h-24 bg-gray-100 animate-pulse rounded-2xl"
+            />
+          ))
+        ) : users.length === 0 ? (
+          <EmptyState icon={<Users size={20} />} title="No users found" />
+        ) : (
+          users.map((user) => (
+            <div
+              key={user.id}
+              onClick={() => router.push(`/dashboard/users/${user.id}`)}
+              className="p-4 bg-white rounded-2xl border border-gray-100 shadow-sm active:scale-[0.98] transition-all"
+            >
+              <div className="flex items-center gap-3 mb-3">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-xs font-bold shrink-0"
+                  style={{
+                    background:
+                      "linear-gradient(135deg, var(--brand-red), #c85c5c)",
+                  }}
+                >
+                  {user.name?.charAt(0)?.toUpperCase() || "?"}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-semibold text-gray-900 truncate">
+                    {user.name || "—"}
+                  </h4>
+                  <div className="flex items-center gap-1.5">
+                    <p className="text-[11px] font-mono text-gray-500 truncate">
+                      {user.email}
+                    </p>
+                    {user.emailVerified && (
+                      <ShieldCheck
+                        size={12}
+                        className="text-[var(--brand-teal)]"
+                      />
+                    )}
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center justify-between pt-3 border-t border-gray-50">
+                <span className="px-2 py-0.5 bg-gray-50 rounded-md text-[10px] font-bold uppercase tracking-wider text-gray-600">
+                  {formatStatus(user.role)}
+                </span>
+                <span
+                  className={`text-[11px] font-medium ${user.isActive ? "text-[var(--brand-teal)]" : "text-gray-400"}`}
+                >
+                  {user.isActive ? "Active" : "Disabled"}
+                </span>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+
+      {/* DESKTOP TABLE VIEW */}
+      <Card className="hidden md:block border-none shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
@@ -187,23 +249,17 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-center gap-4">
-                        {/* Humanized Active/Inactive with dots */}
-                        <div className="flex items-center gap-1.5 min-w-[70px]">
-                          <span className="text-sm text-gray-900">
-                            {user.isActive ? "Active" : "Disabled"}
-                          </span>
-                        </div>
-                        {/* Verified mark */}
-                        <div className="flex items-center gap-1">
-                          {user.emailVerified ? (
-                            <Check
-                              size={14}
-                              style={{ color: "var(--brand-teal)" }}
-                            />
-                          ) : (
-                            <X size={14} className="text-gray-300" />
-                          )}
-                        </div>
+                        <span className="text-sm text-gray-900">
+                          {user.isActive ? "Active" : "Disabled"}
+                        </span>
+                        {user.emailVerified ? (
+                          <Check
+                            size={14}
+                            style={{ color: "var(--brand-teal)" }}
+                          />
+                        ) : (
+                          <X size={14} className="text-gray-300" />
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 text-right">
@@ -217,21 +273,23 @@ export default function UsersPage() {
             </tbody>
           </table>
         </div>
-        {pagination && (
-          <div
-            className="p-4 border-t"
-            style={{ borderColor: "var(--border)" }}
-          >
-            <Pagination
-              page={page}
-              pages={pagination.pages}
-              total={pagination.total}
-              limit={20}
-              onPage={setPage}
-            />
-          </div>
-        )}
       </Card>
+
+      {/* Pagination Footer */}
+      {pagination && (
+        <div
+          className="p-4 bg-white md:bg-transparent rounded-2xl md:rounded-none border border-gray-100 md:border-none md:border-t"
+          style={{ borderColor: "var(--border)" }}
+        >
+          <Pagination
+            page={page}
+            pages={pagination.pages}
+            total={pagination.total}
+            limit={20}
+            onPage={setPage}
+          />
+        </div>
+      )}
     </div>
   );
 }
