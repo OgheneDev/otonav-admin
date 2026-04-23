@@ -40,6 +40,7 @@ export default function WaitlistPage() {
         limit: 20,
         status: status !== "all" ? status : undefined,
       });
+      console.log("Waitlist: ", res.data.data.waitlist);
       setEntries(res.data.data.waitlist);
       setPagination(res.data.data.pagination);
     } catch (err) {

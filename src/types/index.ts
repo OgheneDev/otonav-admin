@@ -53,18 +53,46 @@ export interface OrgMember {
 export interface Order {
   id: string;
   orderNumber: string;
-  status: "pending" | "confirmed" | "in_transit" | "delivered" | "cancelled";
+  orgId: string;
+  packageDescription: string;
+  customerId: string;
+  riderId: string;
+  riderCurrentLocation: string | null;
+  customerLocationLabel: string | null;
+  customerLocationPrecise: string | null;
+  status:
+    | "pending"
+    | "rider_accepted"
+    | "customer_location_set"
+    | "confirmed"
+    | "delivered"
+    | "cancelled"
+    | "in_transit"
+    | "package_picked_up"
+    | "arrived_at_location";
+  assignedAt: string | null;
+  riderAcceptedAt: string | null;
+  customerLocationSetAt: string | null;
+  deliveredAt: string | null;
+  cancelledAt: string | null;
   createdAt: string;
-  deliveredAt?: string;
-  orgName?: string;
-  customerName?: string;
-  customerEmail?: string;
-  orgId?: string;
-  customerId?: string;
-  riderId?: string;
-  customer?: User;
+  updatedAt: string;
+  customer?: {
+    id: string;
+    email: string;
+    name: string | null;
+    phoneNumber: string;
+  };
+  rider?: {
+    id: string;
+    email: string;
+    name: string | null;
+    currentLocation: string | null;
+    phoneNumber: string;
+  };
+  customerLat?: number;
+  customerLng?: number;
   organization?: Organization;
-  rider?: User;
   waitlistEntry?: WaitlistEntry;
 }
 
