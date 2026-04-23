@@ -115,7 +115,7 @@ export default function OrderDetailPage() {
               className="flex items-center gap-2 px-6 py-3 bg-[#E97474] text-white rounded-xl hover:bg-[#E97474]/90 transition-all transform hover:scale-[1.02] shadow-lg hover:shadow-xl"
             >
               <MapPin size={20} />
-              <span className="font-semibold">Track Order</span>
+              <span className="text-sm">Track Order</span>
             </button>
           </div>
         )}

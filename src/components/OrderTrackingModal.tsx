@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   X,
   Navigation,
@@ -16,6 +17,7 @@ import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import "leaflet-routing-machine";
 import "leaflet-routing-machine/dist/leaflet-routing-machine.css";
+import { useAuthStore } from "@/stores/auth.store";
 
 interface OrderTrackingModalProps {
   isOpen: boolean;
@@ -64,6 +66,8 @@ export function OrderTrackingModal({
   const [isGeocoding, setIsGeocoding] = useState(false);
   const [geocodingAttempts, setGeocodingAttempts] = useState(0);
   const [mapInitialized, setMapInitialized] = useState(false);
+  // Track whether we're mounted (needed for portal SSR safety)
+  const [mounted, setMounted] = useState(false);
 
   const mapRef = useRef<HTMLDivElement>(null);
   const leafletMapRef = useRef<L.Map | null>(null);
@@ -72,8 +76,14 @@ export function OrderTrackingModal({
   const routingControlRef = useRef<any>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Ref to track intentional close — avoids stale closure bug in onclose handler
   const isClosingRef = useRef(false);
+
+  const { admin } = useAuthStore();
+
+  // Ensure we're client-side before rendering portal
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Custom rider icon (red truck)
   const riderIcon = L.divIcon({
@@ -173,7 +183,6 @@ export function OrderTrackingModal({
       setGeocodingAttempts((prev) => prev + 1);
 
       try {
-        // Check if it's already coordinates
         const coordinateMatch = address.match(
           /^(-?\d+\.?\d*)[,\s]+(-?\d+\.?\d*)$/,
         );
@@ -186,7 +195,6 @@ export function OrderTrackingModal({
           }
         }
 
-        // Try to extract coordinates from Google Maps links
         const googleMapsMatch = address.match(/@(-?\d+\.?\d*),(-?\d+\.?\d*)/);
         if (googleMapsMatch) {
           const lat = parseFloat(googleMapsMatch[1]);
@@ -197,7 +205,6 @@ export function OrderTrackingModal({
           }
         }
 
-        // Use Nominatim for addresses
         const response = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`,
           {
@@ -223,7 +230,6 @@ export function OrderTrackingModal({
           return result;
         }
 
-        // Fallback to Nigeria center
         setMapError("Using approximate location for Nigeria");
         setIsGeocoding(false);
         return { lat: 9.082, lng: 8.6753 };
@@ -300,10 +306,38 @@ export function OrderTrackingModal({
     }
 
     return () => {
+      // ---- Teardown order matters ----
+      // 1. Signal teardown so in-flight async ops bail early
+      setMapInitialized(false);
+
+      // 2. Remove routing control first (it holds refs to the map)
+      if (routingControlRef.current && leafletMapRef.current) {
+        try {
+          leafletMapRef.current.removeControl(routingControlRef.current);
+        } catch (_) {}
+        routingControlRef.current = null;
+      }
+
+      // 3. Remove markers (clears _leaflet_pos from their DOM nodes)
+      if (riderMarkerRef.current) {
+        try {
+          riderMarkerRef.current.remove();
+        } catch (_) {}
+        riderMarkerRef.current = null;
+      }
+      if (destinationMarkerRef.current) {
+        try {
+          destinationMarkerRef.current.remove();
+        } catch (_) {}
+        destinationMarkerRef.current = null;
+      }
+
+      // 4. Finally destroy the map itself
       if (leafletMapRef.current) {
-        leafletMapRef.current.remove();
+        try {
+          leafletMapRef.current.remove();
+        } catch (_) {}
         leafletMapRef.current = null;
-        setMapInitialized(false);
       }
     };
   }, [destinationLocation, destinationIcon]);
@@ -311,14 +345,21 @@ export function OrderTrackingModal({
   // Update rider marker and calculate route
   const updateRiderMarker = useCallback(
     (location: { lat: number; lng: number }) => {
-      if (!leafletMapRef.current || !destinationLocation) return;
-
       const map = leafletMapRef.current;
+      if (!map || !destinationLocation) return;
 
-      // Update or create rider marker
+      // Update or create rider marker — guard setLatLng with a live map check
       if (riderMarkerRef.current) {
-        riderMarkerRef.current.setLatLng([location.lat, location.lng]);
-      } else {
+        try {
+          riderMarkerRef.current.setLatLng([location.lat, location.lng]);
+        } catch (_) {
+          // Marker's DOM node was detached; recreate it
+          riderMarkerRef.current = null;
+        }
+      }
+      if (!riderMarkerRef.current) {
+        // Re-check map is still alive before adding
+        if (!leafletMapRef.current) return;
         riderMarkerRef.current = L.marker([location.lat, location.lng], {
           icon: riderIcon,
         })
@@ -326,17 +367,17 @@ export function OrderTrackingModal({
           .bindPopup("Rider Location");
       }
 
-      // Remove existing routing control
+      // Remove old routing control safely
       if (routingControlRef.current) {
         try {
           map.removeControl(routingControlRef.current);
-        } catch (error) {
-          console.warn("Error removing routing control:", error);
-        }
+        } catch (_) {}
         routingControlRef.current = null;
       }
 
-      // Create new routing control
+      // Bail if map was torn down between the checks above
+      if (!leafletMapRef.current) return;
+
       try {
         if ((L as any).Routing) {
           const routingControl = (L as any).Routing.control({
@@ -372,19 +413,22 @@ export function OrderTrackingModal({
           });
         }
 
-        // Fit bounds to show both points
-        const bounds = L.latLngBounds([
-          [location.lat, location.lng],
-          [destinationLocation.lat, destinationLocation.lng],
-        ]);
-        map.fitBounds(bounds, { padding: [50, 50] });
+        if (leafletMapRef.current) {
+          const bounds = L.latLngBounds([
+            [location.lat, location.lng],
+            [destinationLocation.lat, destinationLocation.lng],
+          ]);
+          map.fitBounds(bounds, { padding: [50, 50] });
+        }
       } catch (error) {
         console.error("Error creating route:", error);
-        const bounds = L.latLngBounds([
-          [location.lat, location.lng],
-          [destinationLocation.lat, destinationLocation.lng],
-        ]);
-        map.fitBounds(bounds, { padding: [50, 50] });
+        if (leafletMapRef.current) {
+          const bounds = L.latLngBounds([
+            [location.lat, location.lng],
+            [destinationLocation.lat, destinationLocation.lng],
+          ]);
+          map.fitBounds(bounds, { padding: [50, 50] });
+        }
       }
     },
     [destinationLocation, riderIcon],
@@ -397,21 +441,16 @@ export function OrderTrackingModal({
     }
   }, [riderLocation, destinationLocation, mapInitialized, updateRiderMarker]);
 
-  // WebSocket connection with stable reconnect logic
+  // WebSocket connection
   useEffect(() => {
-    if (!isOpen || !order.id || !userId) return;
+    if (!isOpen || !order.id || !admin?.id) return;
 
-    // Reset the closing flag whenever we (re-)open the connection
     isClosingRef.current = false;
 
     const connectWebSocket = () => {
-      // Bail out if we're intentionally tearing down — prevents the stale-closure
-      // reconnect loop where onclose would fire after unmount/isOpen flip and
-      // schedule another connection.
       if (isClosingRef.current) return;
 
-      const wsUrl = `wss://otonav-backend.onrender.com?orderId=${order.id}&userId=${userId}&role=owner`;
-
+      const wsUrl = `wss://otonav-backend.onrender.com?orderId=${order.id}&userId=${admin.id}&role=admin`;
       const ws = new WebSocket(wsUrl);
       wsRef.current = ws;
 
@@ -438,10 +477,6 @@ export function OrderTrackingModal({
 
       ws.onclose = (event) => {
         setWsConnected(false);
-
-        // Only schedule a reconnect when the close was NOT intentional and NOT
-        // a clean close (code 1000). Reading isClosingRef here avoids the stale
-        // `isOpen` closure value that caused the original flicker loop.
         if (!isClosingRef.current && event.code !== 1000) {
           reconnectTimeoutRef.current = setTimeout(connectWebSocket, 3000);
         }
@@ -451,8 +486,6 @@ export function OrderTrackingModal({
     connectWebSocket();
 
     return () => {
-      // Signal intentional close BEFORE calling ws.close() so the onclose
-      // handler sees the flag and skips scheduling a reconnect.
       isClosingRef.current = true;
       if (reconnectTimeoutRef.current) {
         clearTimeout(reconnectTimeoutRef.current);
@@ -462,9 +495,9 @@ export function OrderTrackingModal({
         wsRef.current = null;
       }
     };
-  }, [isOpen, order.id, userId]);
+  }, [isOpen, order.id, admin?.id]);
 
-  // Fall back to saved rider location if WebSocket provides nothing after 5s
+  // Fall back to saved rider location after 5s if WS is silent
   useEffect(() => {
     if (!isOpen || !destinationLocation) return;
 
@@ -509,10 +542,11 @@ export function OrderTrackingModal({
     }
   };
 
-  if (!isOpen) return null;
+  // Don't render anything until mounted (SSR safety) or if closed
+  if (!mounted || !isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white">
@@ -716,4 +750,8 @@ export function OrderTrackingModal({
       </div>
     </div>
   );
+
+  // ✅ Portal renders the modal directly on document.body, escaping any
+  // parent stacking context (transform, filter, will-change, etc.)
+  return createPortal(modalContent, document.body);
 }
