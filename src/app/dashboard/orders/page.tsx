@@ -159,10 +159,10 @@ export default function OrdersPage() {
               <div className="flex items-center justify-between pt-4 border-t border-gray-50">
                 <div className="min-w-0">
                   <p className="text-sm font-semibold text-gray-900 truncate">
-                    {order.customerName || "Guest User"}
+                    {order.customer?.name || "Guest User"}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {order.orgName || "Direct Order"}
+                    {order.organization?.name || "Direct Order"}
                   </p>
                 </div>
                 <ChevronRight size={18} className="text-gray-300 shrink-0" />
@@ -215,10 +215,10 @@ export default function OrdersPage() {
                       </td>
                       <td className="px-6 py-5">
                         <div className="text-sm text-gray-900">
-                          {order.customerName || "Guest User"}
+                          {order.customer?.name || "Guest User"}
                         </div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                          {order.orgName || "Direct Order"}
+                          {order.organization?.name || "Direct Order"}
                         </div>
                       </td>
                       <td className="px-6 py-5">
