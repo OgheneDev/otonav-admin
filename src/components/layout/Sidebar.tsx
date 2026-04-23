@@ -15,6 +15,7 @@ import {
   LogOut,
   X,
   ChevronRight,
+  CreditCard,
 } from "lucide-react";
 
 const navGroups = [
@@ -32,6 +33,11 @@ const navGroups = [
         href: "/dashboard/organizations",
       },
       { label: "Orders", icon: Package, href: "/dashboard/orders" },
+      {
+        label: "Subscriptions",
+        icon: CreditCard,
+        href: "/dashboard/subscriptions",
+      },
     ],
   },
   {

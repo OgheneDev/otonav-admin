@@ -22,7 +22,7 @@ api.interceptors.response.use(
       window.location.href = "/login";
     }
     return Promise.reject(err);
-  }
+  },
 );
 
 // Auth
@@ -35,22 +35,33 @@ export const adminLogout = () => api.post("/admin/logout");
 export const getDashboardOverview = () => api.get("/admin/dashboard");
 
 // Users
-export const getUsers = (params?: { page?: number; limit?: number; role?: string; search?: string }) =>
-  api.get("/admin/users", { params });
+export const getUsers = (params?: {
+  page?: number;
+  limit?: number;
+  role?: string;
+  search?: string;
+}) => api.get("/admin/users", { params });
 
 export const getUserById = (userId: string) =>
   api.get(`/admin/users/${userId}`);
 
 // Organizations
-export const getOrganizations = (params?: { page?: number; limit?: number; search?: string }) =>
-  api.get("/admin/organizations", { params });
+export const getOrganizations = (params?: {
+  page?: number;
+  limit?: number;
+  search?: string;
+}) => api.get("/admin/organizations", { params });
 
 export const getOrganizationById = (orgId: string) =>
   api.get(`/admin/organizations/${orgId}`);
 
 // Orders
-export const getOrders = (params?: { page?: number; limit?: number; status?: string; orgId?: string }) =>
-  api.get("/admin/orders", { params });
+export const getOrders = (params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  orgId?: string;
+}) => api.get("/admin/orders", { params });
 
 export const getOrderById = (orderId: string) =>
   api.get(`/admin/orders/${orderId}`);
@@ -70,8 +81,11 @@ export const createVerifiedRider = (data: {
 }) => api.post("/admin/verified-riders/create", data);
 
 // Waitlist
-export const getWaitlist = (params?: { page?: number; limit?: number; status?: string }) =>
-  api.get("/admin/waitlist", { params });
+export const getWaitlist = (params?: {
+  page?: number;
+  limit?: number;
+  status?: string;
+}) => api.get("/admin/waitlist", { params });
 
 export const getOrgWaitlist = (orgId: string) =>
   api.get(`/admin/waitlist/${orgId}`);
@@ -80,5 +94,41 @@ export const getOrgWaitlist = (orgId: string) =>
 export const getOrderAnalytics = (period?: "week" | "month" | "year") =>
   api.get("/admin/analytics/orders", { params: { period } });
 
-export const getRiderAnalytics = () =>
-  api.get("/admin/analytics/riders");
+export const getRiderAnalytics = () => api.get("/admin/analytics/riders");
+
+export const getSubscriptionAnalytics = () =>
+  api.get("/admin/analytics/subscriptions");
+
+// ─── Subscription Management (Admin acting on behalf of org) ─────────────────
+
+export const getOrgSubscription = (orgId: string) =>
+  api.get(`/admin/organizations/${orgId}/subscription`);
+
+export const adminCreateSubscriptionPayment = (
+  orgId: string,
+  data: { plan: "starter" | "growth" | "pro"; extraRiders?: number },
+) =>
+  api.post(`/admin/organizations/${orgId}/subscription/create-payment`, data);
+
+export const adminChangePlan = (
+  orgId: string,
+  data: {
+    newPlan: "starter" | "growth" | "pro";
+    extraRiders?: number;
+    immediate?: boolean;
+  },
+) => api.post(`/admin/organizations/${orgId}/subscription/change-plan`, data);
+
+export const adminAddExtraRiders = (orgId: string, quantity: number) =>
+  api.post(`/admin/organizations/${orgId}/subscription/add-extra-riders`, {
+    quantity,
+  });
+
+export const adminCancelSubscription = (orgId: string) =>
+  api.post(`/admin/organizations/${orgId}/subscription/cancel`);
+
+export const adminReactivateSubscription = (orgId: string) =>
+  api.post(`/admin/organizations/${orgId}/subscription/reactivate`);
+
+export const adminExtendSubscription = (orgId: string, days: number) =>
+  api.post(`/admin/organizations/${orgId}/subscription/extend`, { days });

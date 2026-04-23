@@ -1,9 +1,6 @@
 {
-  "/dashboard/users/page": "app/dashboard/users/page.js",
-  "/dashboard/users/[userId]/page": "app/dashboard/users/[userId]/page.js",
-  "/dashboard/organizations/page": "app/dashboard/organizations/page.js",
-  "/dashboard/organizations/[orgId]/page": "app/dashboard/organizations/[orgId]/page.js",
-  "/dashboard/orders/page": "app/dashboard/orders/page.js",
-  "/dashboard/orders/[orderId]/page": "app/dashboard/orders/[orderId]/page.js",
-  "/dashboard/analytics/page": "app/dashboard/analytics/page.js"
+  "/login/page": "app/login/page.js",
+  "/dashboard/page": "app/dashboard/page.js",
+  "/dashboard/subscriptions/page": "app/dashboard/subscriptions/page.js",
+  "/dashboard/subscriptions/[orgId]/page": "app/dashboard/subscriptions/[orgId]/page.js"
 }
